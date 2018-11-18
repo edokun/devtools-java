@@ -1,18 +1,18 @@
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
+ * regarding copyright ownership. The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * with the License. You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
+ * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
  *
@@ -57,7 +57,7 @@ public class PojoFactory<T> {
     }
 
     // private helper methods
-    //TODO consider moving this to a helper class
+    // TODO consider moving this to a helper class
 
     /**
      * Method that helps to determine if the class has at least a default zero-arg constructor or not.
@@ -89,21 +89,27 @@ public class PojoFactory<T> {
         return false;
     }
 
-    //TODO need to improve this method
-    //TODO add javadoc
-    private void fillAttributes(T t) throws IllegalAccessException{
+    // TODO need to improve this method
+    // TODO add javadoc
+    private void fillAttributes(T t) throws IllegalAccessException {
         List<Field> fields = Arrays.stream(t.getClass().getDeclaredFields()).collect(Collectors.toList());
-        for(Field field : fields){
+        for (Field field : fields) {
             System.out.println("Attribute Name: " + field.getName() + " Attribute Type: " + field.getType());
 
-            if (field.getType().equals(String.class)){
+            if (field.getType().equals(String.class)) {
                 field.setAccessible(true);
-                field.set(t,"test");
+                field.set(t, "test");
             }
         }
     }
 
-    //TODO add javadoc
+    /**
+     * This method instantiates a normal class, it only can
+     * instantiate if the target class has a default zero-arg constructor.
+     * 
+     * @return an Instance of the target class T
+     * @throws InstantiationException
+     */
     private T instantiateClass() throws InstantiationException {
         T instantiatedClass = null;
 
@@ -113,13 +119,19 @@ public class PojoFactory<T> {
 
         try {
             instantiatedClass = type.newInstance();
-        } catch(InstantiationException | IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException e) {
             throw new InstantiationException(e.getMessage());
         }
         return instantiatedClass;
     }
 
-    //TODO add javadoc
+    /**
+     * This method instantiates an inner class only if the class is not static and
+     * also has a default zero-arg constructor. Same as the parent class, both need a zero-arg constructor
+     * 
+     * @return an Instance of the target inner class T
+     * @throws InstantiationException
+     */
     private T instantiateInnerClass() throws InstantiationException {
         Class<?> enclosingClass = type.getEnclosingClass();
         if (!hasDefaultConstructor(enclosingClass)) {
@@ -144,7 +156,11 @@ public class PojoFactory<T> {
     }
 
     // public methods
-    //TODO add javadoc
+    /**
+     * Instantiates an object of class T (Provided when get instance of PojoFactory).
+     * 
+     * @return an instance with the attributes filled with either random or fixed values
+     */
     public T build() {
         T classInstance = null;
         try {
@@ -163,7 +179,15 @@ public class PojoFactory<T> {
         return classInstance;
     }
 
-    //TODO add javadoc
+    /**
+     * Due to the nature of the Factory pattern of this class
+     * a new instance for specific class needs to be created with the
+     * specific target class as part of the parameters, hence in order to get an instance of the
+     * PojoFactory a call to the getInstance method is required.
+     * 
+     * @param type The target class to instantiate objects.
+     * @return An instantiated object of PojoFactory ready to build instantiated objects of the target class.
+     */
     public static <V> PojoFactory<V> getInstance(Class<V> type) {
         return new PojoFactory<V>(type);
     }
