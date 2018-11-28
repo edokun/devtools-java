@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  *
- * @param <T>
  */
 package net.edokun.tools;
 
@@ -27,6 +26,8 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.RandomStringUtils;
 
 /**
  * This class contains logic to instantiate a Java object following
@@ -51,6 +52,7 @@ public class PojoFactory<T> {
     private static final String INSTANTIATION_ERROR_MESSAGE = "Cannot instantiate class without default constructor";
 
     private final Class<T> type;
+    private boolean randomValues = false;
 
     private PojoFactory(Class<T> type) {
         this.type = type;
@@ -89,17 +91,89 @@ public class PojoFactory<T> {
         return false;
     }
 
+    private boolean getRandomBoolean() {
+        int value = (int) Math.random() * 1;
+        return (value == 0) ? false : true;
+    }
+
+    private float getRandomFloat() {
+        return (float) Math.random() * 9 + 1;
+    }
+
+    private double getRandomDouble() {
+        return Math.random() * 9 + 1;
+    }
+
+    private int getRandomInt() {
+        return (int) Math.random() * 8 + 1;
+    }
+
     // TODO need to improve this method
     // TODO add javadoc
+    // Currently only support Strings, primitive types and wrapper of primitives
     private void fillAttributes(T t) throws IllegalAccessException {
         List<Field> fields = Arrays.stream(t.getClass().getDeclaredFields()).collect(Collectors.toList());
         for (Field field : fields) {
-            System.out.println("Attribute Name: " + field.getName() + " Attribute Type: " + field.getType());
+            // System.out.println("Attribute Name: " + field.getName() + " Attribute Type: " + field.getType());
+
+            field.setAccessible(true);
 
             if (field.getType().equals(String.class)) {
-                field.setAccessible(true);
-                field.set(t, "test");
+                if (randomValues) {
+                    field.set(t, RandomStringUtils.randomAlphabetic(10));
+                } else {
+                    field.set(t, field.getName());
+                }
+            } else if (field.getType().equals(Boolean.class)) {
+                if (randomValues) {
+                    field.set(t, getRandomBoolean());
+                } else {
+                    field.set(t, true);
+                }
+            } else if (field.getType().equals(Byte.class)) {
+                if (randomValues) {
+                    field.set(t, RandomStringUtils.randomAlphabetic(10));
+                } else {
+                    field.set(t, 0);
+                }
+            } else if (field.getType().equals(Character.class)) {
+                if (randomValues) {
+                    field.set(t, RandomStringUtils.randomAlphabetic(1).charAt(0));
+                } else {
+                    field.set(t, 'A');
+                }
+            } else if (field.getType().equals(Short.class)) {
+                if (randomValues) {
+                    field.set(t, getRandomInt());
+                } else {
+                    field.set(t, 0);
+                }
+            } else if (field.getType().equals(Integer.class)) {
+                if (randomValues) {
+                    field.set(t, getRandomInt());
+                } else {
+                    field.set(t, 1);
+                }
+            } else if (field.getType().equals(Long.class)) {
+                if (randomValues) {
+                    field.set(t, getRandomInt());
+                } else {
+                    field.set(t, 1L);
+                }
+            } else if (field.getType().equals(Float.class)) {
+                if (randomValues) {
+                    field.set(t, getRandomFloat());
+                } else {
+                    field.set(t, 1.0);
+                }
+            } else if (field.getType().equals(Double.class)) {
+                if (randomValues) {
+                    field.set(t, getRandomDouble());
+                } else {
+                    field.set(t, 1.0);
+                }
             }
+
         }
     }
 
@@ -190,6 +264,14 @@ public class PojoFactory<T> {
      */
     public static <V> PojoFactory<V> getInstance(Class<V> type) {
         return new PojoFactory<V>(type);
+    }
+
+    /**
+     * Ensure the attributes of the pojo will be random, for String attributes
+     * it will be a random string of 10 characters of length
+     */
+    public void randomizeValues() {
+        randomValues = true;
     }
 
 }
