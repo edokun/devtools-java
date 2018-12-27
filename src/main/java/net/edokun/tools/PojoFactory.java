@@ -53,6 +53,7 @@ public class PojoFactory<T> {
 
     private final Class<T> type;
     private boolean randomValues = false;
+    private T classInstance = null;
 
     private PojoFactory(Class<T> type) {
         this.type = type;
@@ -134,7 +135,7 @@ public class PojoFactory<T> {
                 if (randomValues) {
                     field.set(t, RandomStringUtils.randomAlphabetic(10));
                 } else {
-                    field.set(t, 0);
+                    field.set(t, Byte.valueOf("0"));
                 }
             } else if (field.getType().equals(Character.class)) {
                 if (randomValues) {
@@ -164,7 +165,7 @@ public class PojoFactory<T> {
                 if (randomValues) {
                     field.set(t, getRandomFloat());
                 } else {
-                    field.set(t, 1.0);
+                    field.set(t, 1.0F);
                 }
             } else if (field.getType().equals(Double.class)) {
                 if (randomValues) {
@@ -192,8 +193,8 @@ public class PojoFactory<T> {
         }
 
         try {
-            instantiatedClass = type.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
+            instantiatedClass = type.getConstructor().newInstance();
+        } catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
             throw new InstantiationException(e.getMessage());
         }
         return instantiatedClass;
@@ -236,15 +237,20 @@ public class PojoFactory<T> {
      * @return an instance with the attributes filled with either random or fixed values
      */
     public T build() {
-        T classInstance = null;
         try {
-            if (isInnerNonStatic(type)) {
-                classInstance = instantiateInnerClass();
-            } else {
-                classInstance = instantiateClass();
-            }
+            if (classInstance == null) {
+                //T classInstance = null;
+                if (isInnerNonStatic(type)) {
+                    classInstance = instantiateInnerClass();
+                } else {
+                    classInstance = instantiateClass();
+                }
 
-            fillAttributes(classInstance);
+                fillAttributes(classInstance);
+
+            } else {
+                fillAttributes(classInstance);
+            }
 
         } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
@@ -272,6 +278,11 @@ public class PojoFactory<T> {
      */
     public void randomizeValues() {
         randomValues = true;
+    }
+
+
+    public void setInstatiatedPojo(T object) {
+        classInstance = object;
     }
 
 }
