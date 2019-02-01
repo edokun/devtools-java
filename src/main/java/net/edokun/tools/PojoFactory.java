@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -53,14 +54,13 @@ public class PojoFactory<T> {
 
     private final Class<T> type;
     private boolean randomValues = false;
+    private Random randomSeed;
     private T classInstance = null;
 
     private PojoFactory(Class<T> type) {
         this.type = type;
+        randomSeed = new Random();
     }
-
-    // private helper methods
-    // TODO consider moving this to a helper class
 
     /**
      * Method that helps to determine if the class has at least a default zero-arg constructor or not.
@@ -93,85 +93,111 @@ public class PojoFactory<T> {
     }
 
     private boolean getRandomBoolean() {
-        int value = (int) Math.random() * 1;
-        return (value == 0) ? false : true;
+        return randomSeed.nextBoolean();
     }
 
     private float getRandomFloat() {
-        return (float) Math.random() * 9 + 1;
+        return randomSeed.nextFloat();
     }
 
     private double getRandomDouble() {
-        return Math.random() * 9 + 1;
+        return randomSeed.nextDouble();
     }
 
     private int getRandomInt() {
-        return (int) Math.random() * 8 + 1;
+        return randomSeed.nextInt();
+    }
+
+    private char getRandomCharacter() {
+        return (char) randomSeed.nextInt(Character.MAX_VALUE + 1);
+    }
+
+    private short getRandomShort() {
+        return (short) randomSeed.nextInt(Short.MAX_VALUE + 1);
+    }
+
+    private long getRandomLong() {
+        return randomSeed.nextLong();
+    }
+
+    private byte getRandomByte() {
+        byte[] byteArray = new byte[1];
+        randomSeed.nextBytes(byteArray);
+        return byteArray[0];
     }
 
     // TODO need to improve this method
-    // TODO add javadoc
-    // Currently only support Strings, primitive types and wrapper of primitives
+    /**
+     * Sets either default values or random values for the attributes of the class,
+     * currently only String, Object, primitive types and wrappers of primitives are supported.
+     *
+     * Arrays and Collections NOT SUPPORTED YET!!!
+     *
+     * @param t
+     * @throws IllegalAccessException
+     */
     private void fillAttributes(T t) throws IllegalAccessException {
         List<Field> fields = Arrays.stream(t.getClass().getDeclaredFields()).collect(Collectors.toList());
         for (Field field : fields) {
-            // System.out.println("Attribute Name: " + field.getName() + " Attribute Type: " + field.getType());
-
             field.setAccessible(true);
 
             if (field.getType().equals(String.class)) {
                 if (randomValues) {
                     field.set(t, RandomStringUtils.randomAlphabetic(10));
                 } else {
-                    field.set(t, field.getName());
+                    field.set(t, "");
                 }
+            // By default if the type is Object, it will instantiate a new Object class
+            } else if (field.getType().equals(Object.class)) {
+                field.set(t, new Object());
+
             } else if (field.getType().equals(Boolean.class)) {
                 if (randomValues) {
                     field.set(t, getRandomBoolean());
                 } else {
-                    field.set(t, true);
+                    field.set(t, false);
                 }
             } else if (field.getType().equals(Byte.class)) {
                 if (randomValues) {
-                    field.set(t, RandomStringUtils.randomAlphabetic(10));
+                    field.set(t, getRandomByte());
                 } else {
                     field.set(t, Byte.valueOf("0"));
                 }
             } else if (field.getType().equals(Character.class)) {
                 if (randomValues) {
-                    field.set(t, RandomStringUtils.randomAlphabetic(1).charAt(0));
+                    field.set(t, getRandomCharacter());
                 } else {
-                    field.set(t, 'A');
+                    field.set(t, '\u0000');
                 }
             } else if (field.getType().equals(Short.class)) {
                 if (randomValues) {
-                    field.set(t, getRandomInt());
+                    field.set(t, getRandomShort());
                 } else {
-                    field.set(t, 0);
+                    field.set(t, Short.valueOf("0").shortValue());
                 }
             } else if (field.getType().equals(Integer.class)) {
                 if (randomValues) {
                     field.set(t, getRandomInt());
                 } else {
-                    field.set(t, 1);
+                    field.set(t, 0);
                 }
             } else if (field.getType().equals(Long.class)) {
                 if (randomValues) {
-                    field.set(t, getRandomInt());
+                    field.set(t, getRandomLong());
                 } else {
-                    field.set(t, 1L);
+                    field.set(t, 0L);
                 }
             } else if (field.getType().equals(Float.class)) {
                 if (randomValues) {
                     field.set(t, getRandomFloat());
                 } else {
-                    field.set(t, 1.0F);
+                    field.set(t, 0.0F);
                 }
             } else if (field.getType().equals(Double.class)) {
                 if (randomValues) {
                     field.set(t, getRandomDouble());
                 } else {
-                    field.set(t, 1.0);
+                    field.set(t, 0.0);
                 }
             }
 
@@ -230,13 +256,12 @@ public class PojoFactory<T> {
         }
     }
 
-    // public methods
     /**
      * Instantiates an object of class T (Provided when get instance of PojoFactory).
      * 
      * @return an instance with the attributes filled with either random or fixed values
      */
-    public T build() {
+    public T build() throws RuntimeException {
         try {
             if (classInstance == null) {
                 //T classInstance = null;
@@ -254,6 +279,7 @@ public class PojoFactory<T> {
 
         } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
         }
 
         return classInstance;
