@@ -23,9 +23,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -56,6 +54,7 @@ public class PojoFactory<T> {
     private boolean randomValues = false;
     private Random randomSeed;
     private T classInstance = null;
+    private Map<String,Object> specificValues = new HashMap<>();
 
     private PojoFactory(Class<T> type) {
         this.type = type;
@@ -130,8 +129,9 @@ public class PojoFactory<T> {
     /**
      * Sets either default values or random values for the attributes of the class,
      * currently only String, Object, primitive types and wrappers of primitives are supported.
+     * If specific values added through setValueForAttribute() the value will be set for specific attribute.
      *
-     * Arrays and Collections NOT SUPPORTED YET!!!
+     * Arrays and Collections NOT SUPPORTED !!!
      *
      * @param t
      * @throws IllegalAccessException
@@ -309,6 +309,15 @@ public class PojoFactory<T> {
 
     public void setInstatiatedPojo(T object) {
         classInstance = object;
+    }
+
+    public void setValueForAttribute(String attributeName, Object value) {
+        specificValues.put(attributeName,value);
+    }
+
+    
+    private void setSpecificValues(){
+
     }
 
 }
